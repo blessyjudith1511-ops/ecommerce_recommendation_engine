@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Product - AuraShop Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 650px; margin: 30px auto;">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>{{ action }} Product</h2>
+            <p>{{ action }} product details in the SQLite inventory database</p>
+        </div>
+
+        <form action="" method="POST">
+            <!-- Product Name -->
+            <div class="form-group">
+                <label class="form-label" for="name">Product Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="form-control"
+                    placeholder="e.g. Wireless Noise-Cancelling Earbuds"
+                    value="{{ product.name if product else '' }}"
+                    required
+                >
+            </div>
+
+            <!-- Category & Emoji Icon -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" name="category" class="form-control" required>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if product and product.category == cat %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="image">Emoji Icon</label>
+                    <input
+                        type="text"
+                        id="image"
+                        name="image"
+                        class="form-control"
+                        placeholder="e.g. 🎧, 💻, 📚"
+                        value="{{ product.image if product else '🛍️' }}"
+                    >
+                </div>
+            </div>
+
+            <!-- Price, Rating, Stock -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="price">Price (₹)</label>
+                    <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        class="form-control"
+                        step="0.01"
+                        min="0"
+                        placeholder="e.g. 1999"
+                        value="{{ product.price if product else '' }}"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="rating">Rating (0 - 5)</label>
+                    <input
+                        type="number"
+                        id="rating"
+                        name="rating"
+                        class="form-control"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        placeholder="e.g. 4.5"
+                        value="{{ product.rating if product else '4.0' }}"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="stock">Available Stock</label>
+                    <input
+                        type="number"
+                        id="stock"
+                        name="stock"
+                        class="form-control"
+                        min="0"
+                        placeholder="e.g. 25"
+                        value="{{ product.stock if product else '10' }}"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label" for="description">Product Description</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Provide a detailed description of features and specifications..."
+                    required
+                >{{ product.description if product else '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="flex: 2;">
+                    💾 Save Product
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg" style="flex: 1;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

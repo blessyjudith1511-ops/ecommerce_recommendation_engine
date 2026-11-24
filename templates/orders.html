@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin: 30px auto;">
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">📦 Your Order History</h1>
+            <p class="section-subtitle">View past orders and purchased items associated with your account</p>
+        </div>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">← Back to Shop</a>
+    </div>
+
+    {% if orders %}
+        {% for o in orders %}
+        <div class="scenario-card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1e9f7; padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <span style="font-weight: 800; color: var(--primary-color); font-size: 16px;">Order #ORD-{{ o.order.order_id }}</span>
+                    <span style="color: var(--text-muted); font-size: 13px; margin-left: 12px;">Placed on {{ o.order.order_date }}</span>
+                    {% if o.order.transaction_id %}
+                        <div style="font-family: monospace; font-size: 11px; color: var(--primary-light); margin-top: 3px;">
+                            TXN: {{ o.order.transaction_id }} · {{ o.order.payment_method or 'Demo Payment' }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    {% if o.order.payment_status == 'Paid' %}
+                        <span style="background: #e8f5e9; color: var(--success-color); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: var(--radius-pill);">
+                            ✓ Paid
+                        </span>
+                    {% elif o.order.payment_status == 'Pending' %}
+                        <span style="background: #fff8e1; color: var(--warning-color); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: var(--radius-pill);">
+                            ⏳ Pending (COD)
+                        </span>
+                    {% elif o.order.payment_status == 'Failed' %}
+                        <span style="background: #ffebee; color: var(--danger-color); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: var(--radius-pill);">
+                            ✕ Failed
+                        </span>
+                    {% endif %}
+                    <strong style="color: var(--primary-color); font-size: 17px;">₹{{ "{:,.2f}".format(o.order.total_amount) }}</strong>
+                </div>
+            </div>
+
+            <!-- Items in this order -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for item in o.order_items %}
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #faf7fd; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">{{ item.image or '🛍️' }}</span>
+                        <div>
+                            <strong>{{ item.name }}</strong>
+                            <div style="color: var(--text-muted); font-size: 12px;">Qty: {{ item.quantity }} × ₹{{ "{:,.2f}".format(item.unit_price) }}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 700; color: var(--text-primary);">
+                        ₹{{ "{:,.2f}".format(item.quantity * item.unit_price) }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-box">
+            <div class="empty-icon">📦</div>
+            <h3>No Orders Placed Yet</h3>
+            <p style="margin: 10px 0 20px;">You haven't placed any orders with this account yet.</p>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Browse Catalog</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

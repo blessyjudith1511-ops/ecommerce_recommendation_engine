@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <div style="margin: 20px 0 10px; font-size: 13px; color: var(--text-secondary);">
+        <a href="{{ url_for('home') }}" style="color: var(--primary-color); text-decoration: none;">Home</a>
+        <span style="margin: 0 8px;">/</span>
+        <a href="{{ url_for('home', category=product.category) }}" style="color: var(--primary-color); text-decoration: none;">{{ product.category }}</a>
+        <span style="margin: 0 8px;">/</span>
+        <span>{{ product.name }}</span>
+    </div>
+
+    <!-- Product Detail Layout Card -->
+    <div class="product-detail-layout">
+        <!-- Visual Presentation -->
+        <div class="detail-image-box">
+            <span>{{ product.image or '🛍️' }}</span>
+            <span class="product-category-tag" style="top: 20px; left: 20px;">{{ product.category }}</span>
+        </div>
+
+        <!-- Information & Actions -->
+        <div class="detail-info">
+            <span class="detail-category-crumb">{{ product.category }}</span>
+            <h1 class="detail-title">{{ product.name }}</h1>
+
+            <div class="detail-rating-stock">
+                <span class="star-rating" style="font-size: 16px;">⭐ {{ "%.1f"|format(product.rating) }}</span>
+                <span>•</span>
+                {% if product.stock > 5 %}
+                    <span class="stock-tag stock-in" style="position: static;">In Stock ({{ product.stock }} units)</span>
+                {% elif product.stock > 0 %}
+                    <span class="stock-tag stock-low" style="position: static;">Low Stock: Only {{ product.stock }} left!</span>
+                {% else %}
+                    <span class="stock-tag stock-out" style="position: static;">Currently Out of Stock</span>
+                {% endif %}
+            </div>
+
+            <div class="detail-price">
+                ₹{{ "{:,.2f}".format(product.price) }}
+            </div>
+
+            <div class="detail-description">
+                <h4 style="color: var(--text-primary); margin-bottom: 6px;">Product Description</h4>
+                <p>{{ product.description }}</p>
+            </div>
+
+            {% if product.stock > 0 %}
+                <form action="{{ url_for('add_to_cart', product_id=product.product_id) }}" method="POST">
+                    <div class="qty-control-wrapper">
+                        <span class="qty-label">Quantity:</span>
+                        <div class="qty-counter">
+                            <button type="button" class="qty-btn" id="qty-btn-minus">-</button>
+                            <input
+                                type="number"
+                                id="product-quantity-input"
+                                name="quantity"
+                                class="qty-input"
+                                value="1"
+                                min="1"
+                                max="{{ product.stock }}"
+                            >
+                            <button type="button" class="qty-btn" id="qty-btn-plus">+</button>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-muted);">Max: {{ product.stock }}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary btn-lg" style="flex: 2; min-width: 170px;">
+                            🛒 Add to Cart
+                        </button>
+                        <a href="{{ url_for('add_to_wishlist', product_id=product.product_id) }}" class="btn btn-outline btn-lg" style="flex: 1.2; min-width: 170px;">
+                            {% if product.product_id in user_wishlist_ids %}
+                                ❤️ In Wishlist
+                            {% else %}
+                                🤍 Add to Wishlist
+                            {% endif %}
+                        </a>
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg" style="flex: 1; min-width: 110px;">
+                            Back
+                        </a>
+                    </div>
+                </form>
+            {% else %}
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-secondary btn-lg btn-block" disabled>Item Currently Out of Stock</button>
+                    <a href="{{ url_for('home') }}" class="btn btn-outline btn-block" style="margin-top: 10px;">Explore Similar Items</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         Related & Recommended Products Section
+         ===================================================================== -->
+    <section class="section" style="margin-top: 40px;">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">✨ Recommended Products</h2>
+                <p class="section-subtitle">
+                    Products from the same category or customer favorites (retrieved with indexed SQL query)
+                </p>
+            </div>
+            <a href="{{ url_for('optimization') }}" class="btn btn-sm btn-outline">Check Query Plan ⚡</a>
+        </div>
+
+        {% if recommendations %}
+        <div class="product-grid">
+            {% for item in recommendations %}
+            <div class="product-card">
+                <div class="product-image-box">
+                    <span>{{ item.image or '🛍️' }}</span>
+                    <span class="product-category-tag">{{ item.category }}</span>
+                    <a href="{{ url_for('add_to_wishlist', product_id=item.product_id) }}"
+                       class="wishlist-btn {% if item.product_id in user_wishlist_ids %}active{% endif %}"
+                       title="{% if item.product_id in user_wishlist_ids %}Saved in Wishlist{% else %}Add to Wishlist{% endif %}">
+                        {% if item.product_id in user_wishlist_ids %}❤️{% else %}🤍{% endif %}
+                    </a>
+                </div>
+                <div class="product-content">
+                    <div class="recommendation-banner badge-{{ item.badge_color or 'purple' }}">
+                        <span>{{ item.recommendation_reason }}</span>
+                    </div>
+
+                    <h3 class="product-title">{{ item.name }}</h3>
+                    <p class="product-desc">{{ item.description }}</p>
+
+                    <div class="product-rating">
+                        <span class="star-rating">⭐ {{ "%.1f"|format(item.rating) }}</span>
+                        <span>• Stock: {{ item.stock }}</span>
+                    </div>
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ "{:,.2f}".format(item.price) }}</div>
+                    </div>
+
+                    <div class="product-actions">
+                        <a href="{{ url_for('product_details', product_id=item.product_id) }}" class="btn btn-outline btn-sm">
+                            Details
+                        </a>
+                        {% if item.stock > 0 %}
+                            <a href="{{ url_for('add_to_cart', product_id=item.product_id) }}" class="btn btn-primary btn-sm">
+                                + Cart
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>Sold Out</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p style="text-align: center; color: var(--text-muted); padding: 30px;">No recommendations available for this product.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

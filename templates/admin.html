@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <!-- Admin Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="font-size: 28px; font-weight: 800; color: var(--primary-color);">⚙️ Catalog Management & Admin Panel</h1>
+            <p style="color: var(--text-secondary); font-size: 14px;">Manage store inventory, monitor stock, and review system metrics</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
+                ➕ Add New Product
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                View Store
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_products }}</div>
+            <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_orders }}</div>
+            <div class="stat-label">Total Orders Placed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">Registered Customers</div>
+        </div>
+        <div class="stat-card" style="border-color: {% if low_stock_count > 0 %}#ffcc80{% else %}var(--border-color){% endif %};">
+            <div class="stat-number" style="color: {% if low_stock_count > 0 %}var(--warning-color){% else %}var(--success-color){% endif %};">
+                {{ low_stock_count }}
+            </div>
+            <div class="stat-label">Low Stock Alerts (≤5)</div>
+        </div>
+    </div>
+
+    <!-- Products Inventory Table -->
+    <div class="admin-table-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="color: var(--primary-color); font-size: 18px; font-weight: 800;">Catalog Inventory ({{ products|length }} Items)</h3>
+        </div>
+
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Icon</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Rating</th>
+                    <th>Stock</th>
+                    <th>Update Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td><strong>#{{ p.product_id }}</strong></td>
+                    <td style="font-size: 22px;">{{ p.image or '🛍️' }}</td>
+                    <td>
+                        <a href="{{ url_for('product_details', product_id=p.product_id) }}" style="font-weight: 700; color: var(--text-primary); text-decoration: none;">
+                            {{ p.name }}
+                        </a>
+                    </td>
+                    <td><span class="pill-link" style="padding: 2px 8px; font-size: 11px;">{{ p.category }}</span></td>
+                    <td><strong>₹{{ "{:,.2f}".format(p.price) }}</strong></td>
+                    <td>⭐ {{ "%.1f"|format(p.rating) }}</td>
+                    <td>
+                        {% if p.stock > 5 %}
+                            <span class="stock-tag stock-in" style="position: static;">{{ p.stock }}</span>
+                        {% elif p.stock > 0 %}
+                            <span class="stock-tag stock-low" style="position: static;">{{ p.stock }} (Low)</span>
+                        {% else %}
+                            <span class="stock-tag stock-out" style="position: static;">Out of Stock</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <!-- Inline Quick Stock Form -->
+                        <form action="{{ url_for('admin_update_stock', product_id=p.product_id) }}" method="POST" style="display: flex; gap: 4px; align-items: center;">
+                            <input type="number" name="stock" value="{{ p.stock }}" min="0" style="width: 65px; padding: 4px 6px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 4px;">
+                            <button type="submit" class="btn btn-sm btn-secondary" style="padding: 4px 8px; font-size: 11px;">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <a href="{{ url_for('admin_edit_product', product_id=p.product_id) }}" class="btn btn-sm btn-outline" style="padding: 4px 8px; font-size: 12px;">
+                                ✏️ Edit
+                            </a>
+                            <form action="{{ url_for('admin_delete_product', product_id=p.product_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ p.name }}\'?');" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartCommerce - Recommendation Engine & DBMS Optimization{% endblock %}</title>
+    <!-- Modern Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- =====================================================================
+         Site Header & Navigation Bar
+         ===================================================================== -->
+    <header class="site-header">
+        <nav class="navbar">
+            <!-- Brand Logo -->
+            <a href="{{ url_for('home') }}" class="brand-logo">
+                <div class="brand-icon">🛍️</div>
+                <span>AuraShop</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}">🏠 Home</a></li>
+                <li><a href="{{ url_for('optimization') }}">⚡ Query Optimization</a></li>
+                <li>
+                    <a href="{{ url_for('view_wishlist') }}">
+                        ❤️ Wishlist
+                        {% if wishlist_count > 0 %}
+                            <span class="cart-badge" style="background: #e91e63;">{{ wishlist_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('view_cart') }}">
+                        🛒 Cart
+                        {% if cart_count > 0 %}
+                            <span class="cart-badge">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+            </ul>
+
+            <!-- User Authentication / Profile Area -->
+            <div class="user-nav">
+                {% if current_user %}
+                    <span class="user-greeting">
+                        👋 Hi, {{ current_user.full_name.split(' ')[0] }}
+                        {% if current_user.is_admin == 1 %}
+                            <span class="admin-tag">ADMIN</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ url_for('order_history') }}" class="btn btn-sm btn-outline" style="color: white; border-color: rgba(255,255,255,0.4);">📦 Orders</a>
+                    <a href="{{ url_for('payment_history') }}" class="btn btn-sm btn-outline" style="color: white; border-color: rgba(255,255,255,0.4);">💳 Payments</a>
+                    {% if current_user.is_admin == 1 %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-outline" style="color: #ffcc80; border-color: #ffcc80;">⚙️ Dashboard</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-secondary">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-sm btn-nav-auth">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-sm btn-secondary">Register</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <!-- =====================================================================
+         Flash Notification Messages
+         ===================================================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="alert-close" aria-label="Close">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- =====================================================================
+         Main Page Content Block
+         ===================================================================== -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- =====================================================================
+         Site Footer
+         ===================================================================== -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div>
+                <div class="footer-brand">🛍️ AuraShop Recommendation Engine</div>
+                <p style="font-size: 13px; margin-top: 4px; color: #a996b8;">
+                    College DBMS & Query Optimization Project · SQLite Cost-Based Optimizer
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('optimization') }}" style="color: #e1bee7; text-decoration: none; font-weight: 600; margin-right: 15px;">⚡ Query Optimization Dashboard</a>
+                <a href="{{ url_for('home') }}" style="color: #e1bee7; text-decoration: none; font-weight: 600;">Browse Catalog</a>
+            </div>
+        </div>
+        <div class="footer-note">
+            Built with Python Flask, SQLite, Jinja2, and Modern CSS3 · Academic Project Showcase
+        </div>
+    </footer>
+
+    <!-- Client-Side JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

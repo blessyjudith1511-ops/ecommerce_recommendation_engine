@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Query Optimization & DBMS Dashboard - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <!-- =====================================================================
+         Header Banner
+         ===================================================================== -->
+    <div class="optimization-header-banner">
+        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">⚡ DBMS Query Optimization Dashboard</h1>
+        <p style="font-size: 15px; opacity: 0.95; max-width: 800px; line-height: 1.6;">
+            A comparative analysis of database execution plans, B-Tree indexes, composite indexing, and query execution times using SQLite's Cost-Based Optimizer (CBO).
+        </p>
+    </div>
+
+    <!-- =====================================================================
+         Database Statistics Cards
+         ===================================================================== -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_products }}</div>
+            <div class="stat-label">Catalog Products</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">Registered Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_orders }}</div>
+            <div class="stat-label">Completed Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_activities }}</div>
+            <div class="stat-label">Tracked User Actions</div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         Database Indexes Table (sqlite_master)
+         ===================================================================== -->
+    <div class="scenario-card">
+        <div class="scenario-header">
+            <span class="scenario-concept">DBMS Physical Schema</span>
+            <h3 class="scenario-title">Active Database Performance Indexes</h3>
+        </div>
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+            The following B-Tree indexes are defined in SQLite to eliminate full table scans (SCAN) and accelerate search, sorting, and joins.
+        </p>
+
+        <div style="overflow-x: auto;">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Index Name</th>
+                        <th>Target Table</th>
+                        <th>SQL Definition</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for idx in indexes %}
+                    <tr>
+                        <td><strong style="color: var(--primary-color);">{{ idx.name }}</strong></td>
+                        <td><span class="pill-link" style="padding: 2px 8px; font-size: 11px;">{{ idx.tbl_name }}</span></td>
+                        <td><code style="background: #f7f2fa; padding: 3px 6px; border-radius: 4px; font-size: 12px;">{{ idx.sql }}</code></td>
+                        <td style="font-size: 13px; color: var(--text-secondary);">
+                            {% if 'category_rating' in idx.name %}
+                                Composite index: Eliminates in-memory B-Tree sorting on category queries.
+                            {% elif 'category_price' in idx.name %}
+                                Composite index: Fast range filtering and price sorting.
+                            {% elif 'idx_category' in idx.name %}
+                                Single index: Category landing pages and distinct lists.
+                            {% elif 'idx_price' in idx.name %}
+                                Single index: Budget slider and price comparisons.
+                            {% elif 'idx_rating' in idx.name %}
+                                Single index: Star rating sorting.
+                            {% elif 'idx_activity' in idx.name %}
+                                Foreign key index: High-speed joins for recommendation history.
+                            {% else %}
+                                Performance optimization index.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         Important Viva Note: Cost-Based Optimizer & Small Databases
+         ===================================================================== -->
+    <div style="background: #fff8e1; border-left: 4px solid #ffb300; padding: 18px 22px; border-radius: var(--radius-md); margin-bottom: 30px;">
+        <h4 style="color: #b78103; margin-bottom: 6px; font-size: 16px;">
+            📘 Important Viva Note: SQLite Cost-Based Optimizer (CBO) Behavior
+        </h4>
+        <p style="font-size: 14px; color: #5d4037; line-height: 1.6; margin-bottom: 10px;">
+            In relational database management systems like SQLite, the <strong>Cost-Based Optimizer</strong> evaluates the estimated disk I/O cost before choosing an execution plan.
+            For very small tables (e.g. under 50 rows), reading the entire table directly in a sequential scan is often faster than reading an index page into memory and then reading the table data page.
+            When tables grow into thousands of rows, the optimizer switches decisively to <code>SEARCH TABLE ... USING INDEX</code>, delivering order-of-magnitude performance gains.
+        </p>
+        <form action="{{ url_for('benchmark_dataset') }}" method="POST" style="margin-top: 10px;">
+            <button type="submit" class="btn btn-sm btn-primary">
+                🚀 Populate 5,000 Records Benchmark Dataset (Demonstrate Index Scaling)
+            </button>
+            <span style="font-size: 12px; color: #795548; margin-left: 8px;">
+                (Adds synthetic catalog items to visibly verify index utilization under load)
+            </span>
+        </form>
+    </div>
+
+    <!-- =====================================================================
+         Query Optimization Scenarios Comparison
+         ===================================================================== -->
+    {% for b in benchmarks %}
+    <div class="scenario-card">
+        <div class="scenario-header">
+            <span class="scenario-concept">{{ b.concept }}</span>
+            <h2 class="scenario-title">{{ b.title }}</h2>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">{{ b.description }}</p>
+        </div>
+
+        <!-- SQL Comparison Grid -->
+        <div class="sql-comparison-grid">
+            <!-- Non-Optimized Column -->
+            <div class="sql-box">
+                <div class="sql-box-header">
+                    <span>🔴 Original (Non-Optimized) Query</span>
+                    <span class="badge-unopt">UNOPTIMIZED</span>
+                </div>
+                <pre class="sql-code">{{ b.unoptimized_sql }}</pre>
+            </div>
+
+            <!-- Optimized Column -->
+            <div class="sql-box">
+                <div class="sql-box-header">
+                    <span>🟢 Optimized Query</span>
+                    <span class="badge-opt">OPTIMIZED</span>
+                </div>
+                <pre class="sql-code">{{ b.optimized_sql }}</pre>
+            </div>
+        </div>
+
+        <!-- Plans & Metrics Comparison Grid -->
+        <div class="sql-comparison-grid">
+            <!-- Unoptimized Plan & Execution Time -->
+            <div class="plan-box" style="border-left: 4px solid var(--danger-color);">
+                <div class="plan-box-title" style="color: var(--danger-color);">
+                    <span>⚙️ EXPLAIN QUERY PLAN (Original)</span>
+                </div>
+                <ul style="margin: 8px 0 8px 20px; font-family: monospace; font-size: 13px;">
+                    {% for step in b.unoptimized_plan %}
+                        <li>{{ step }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="timing-badge timing-unopt">
+                    ⏱️ Execution Time: {{ b.unoptimized_time }} ms ({{ b.unoptimized_rows }} rows)
+                </div>
+            </div>
+
+            <!-- Optimized Plan & Execution Time -->
+            <div class="plan-box" style="border-left: 4px solid var(--success-color);">
+                <div class="plan-box-title" style="color: var(--success-color);">
+                    <span>⚡ EXPLAIN QUERY PLAN (Optimized)</span>
+                </div>
+                <ul style="margin: 8px 0 8px 20px; font-family: monospace; font-size: 13px;">
+                    {% for step in b.optimized_plan %}
+                        <li>{{ step }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="timing-badge timing-opt">
+                    ⚡ Execution Time: {{ b.optimized_time }} ms ({{ b.optimized_rows }} rows)
+                </div>
+            </div>
+        </div>
+
+        <!-- Speedup Highlight -->
+        <div class="speedup-callout">
+            <div>
+                <strong>🚀 Speedup Factor:</strong>
+                <span>Optimized query executes <strong>{{ b.speedup }}x faster</strong> on average.</span>
+            </div>
+            <div>
+                <strong>Indexes Utilized:</strong>
+                <span style="font-size: 13px;">{{ b.indexes_used|join(', ') }}</span>
+            </div>
+        </div>
+
+        <!-- Technical Explanation -->
+        <div class="explanation-box">
+            <h4 style="color: var(--primary-color); margin-bottom: 6px;">💡 Technical Explanation & DBMS Theory:</h4>
+            <div style="white-space: pre-line;">{{ b.explanation }}</div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- =====================================================================
+         Viva Questions & Answers Preparation Guide
+         ===================================================================== -->
+    <div class="viva-box">
+        <div style="border-bottom: 2px solid #ecdff3; padding-bottom: 12px; margin-bottom: 20px;">
+            <h2 style="color: var(--primary-color); font-size: 24px; font-weight: 800;">
+                🎓 College Viva & Presentation Preparation Guide
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 14px;">
+                Key DBMS and Query Optimization questions frequently asked by professors and external examiners.
+            </p>
+        </div>
+
+        <div class="viva-item">
+            <div class="viva-question">1. What is the difference between a table scan (SCAN) and an index lookup (SEARCH)?</div>
+            <div class="viva-answer">
+                In a <strong>table scan (SCAN TABLE)</strong>, the database engine must inspect every single row in the table from beginning to end ($O(N)$ time complexity).
+                In an <strong>index lookup (SEARCH TABLE USING INDEX)</strong>, the database traverses a balanced B-Tree structure directly to the matching key ($O(\log N)$ time complexity), drastically reducing disk I/O and CPU cycles.
+            </div>
+        </div>
+
+        <div class="viva-item">
+            <div class="viva-question">2. What is a Composite Index, and how did you use it in this project?</div>
+            <div class="viva-answer">
+                A <strong>Composite Index</strong> is an index defined on multiple columns, such as <code>CREATE INDEX idx_product_category_rating ON products(category, rating DESC)</code>.
+                In our project, when a user browses a category sorted by top ratings, SQLite uses this composite index to simultaneously filter by <code>category = ?</code> and return the rows in pre-sorted order by <code>rating DESC</code>.
+                This completely eliminates the need for SQLite to create a temporary in-memory B-Tree to perform a separate sorting pass (<code>USE TEMP B-TREE FOR ORDER BY</code>).
+            </div>
+        </div>
+
+        <div class="viva-item">
+            <div class="viva-question">3. Why does SQLite sometimes choose a full table scan even when an index exists?</div>
+            <div class="viva-answer">
+                SQLite utilizes a <strong>Cost-Based Optimizer (CBO)</strong>. If a table is small (e.g. 15 to 50 rows), the entire table fits into a single 4096-byte database page in memory cache. Reading that single page linearly is faster than traversing index B-Tree pages and then performing random page lookups on the table.
+                Once the dataset scales (demonstrated via our 5,000 row generator), the cost of scanning outweighs index traversal, and the optimizer switches to the index.
+            </div>
+        </div>
+
+        <div class="viva-item">
+            <div class="viva-question">4. Why are Parameterized Queries critical for both optimization and security?</div>
+            <div class="viva-answer">
+                <strong>Optimization:</strong> Parameterized queries (using <code>?</code> placeholders) allow the database engine to parse and compile the SQL execution plan once, and cache it for subsequent executions with different parameter values (prepared statements).<br>
+                <strong>Security:</strong> They treat user input strictly as literal values rather than executable SQL code, completely neutralizing <strong>SQL Injection</strong> attacks.
+            </div>
+        </div>
+
+        <div class="viva-item">
+            <div class="viva-question">5. What does SARGable mean in SQL query design?</div>
+            <div class="viva-answer">
+                <strong>SARGable</strong> stands for <em>Search Argument Able</em>. A query predicate is SARGable if the database engine can directly exploit an index to satisfy it. Wrapping indexed columns in functions or math expressions (e.g., <code>WHERE (price + 0) &lt;= 2000</code> or <code>WHERE category LIKE '%Books%'</code>) renders the condition non-SARGable, forcing a full table scan. Writing <code>WHERE price &lt;= 2000</code> is SARGable and uses the B-Tree index.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

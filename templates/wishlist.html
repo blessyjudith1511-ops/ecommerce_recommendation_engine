@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <!-- Wishlist Header -->
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">❤️ My Saved Wishlist</h1>
+            <p class="section-subtitle">
+                {% if wishlist_items %}
+                    You have {{ wishlist_items|length }} saved item{% if wishlist_items|length != 1 %}s{% endif %} in your personal wishlist
+                {% else %}
+                    Keep track of items you love and move them to your cart whenever you're ready
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">← Continue Shopping</a>
+        </div>
+    </div>
+
+    {% if wishlist_items %}
+        <div class="product-grid" style="margin-bottom: 40px;">
+            {% for item in wishlist_items %}
+            <div class="product-card">
+                <div class="product-image-box">
+                    <span>{{ item.image or '🛍️' }}</span>
+                    <span class="product-category-tag">{{ item.category }}</span>
+                    {% if item.stock > 5 %}
+                        <span class="stock-tag stock-in">In Stock</span>
+                    {% elif item.stock > 0 %}
+                        <span class="stock-tag stock-low">Only {{ item.stock }} left</span>
+                    {% else %}
+                        <span class="stock-tag stock-out">Out of Stock</span>
+                    {% endif %}
+                </div>
+
+                <div class="product-content">
+                    <h3 class="product-title">
+                        <a href="{{ url_for('product_details', product_id=item.product_id) }}" style="color: inherit; text-decoration: none;">
+                            {{ item.name }}
+                        </a>
+                    </h3>
+                    <p class="product-desc">{{ item.description }}</p>
+
+                    <div class="product-rating">
+                        <span class="star-rating">⭐ {{ "%.1f"|format(item.rating) }}</span>
+                        <span>• Stock: {{ item.stock }}</span>
+                    </div>
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ "{:,.2f}".format(item.price) }}</div>
+                        <span style="font-size: 11px; color: var(--text-muted);">Saved {{ item.added_at.split(' ')[0] if item.added_at else '' }}</span>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                        {% if item.stock > 0 %}
+                            <a href="{{ url_for('move_to_cart', product_id=item.product_id) }}" class="btn btn-primary btn-block btn-sm">
+                                🛒 Move to Cart
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary btn-block btn-sm" disabled>Out of Stock</button>
+                        {% endif %}
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <a href="{{ url_for('product_details', product_id=item.product_id) }}" class="btn btn-outline btn-sm">
+                                Details
+                            </a>
+                            <a href="{{ url_for('remove_from_wishlist', product_id=item.product_id) }}" class="btn btn-danger btn-sm" title="Remove from wishlist">
+                                🗑️ Remove
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty Wishlist State -->
+        <div class="empty-box" style="margin: 40px auto; max-width: 600px;">
+            <div class="empty-icon">🤍</div>
+            <h2 style="color: var(--primary-color); margin-bottom: 8px;">Your Wishlist is Empty</h2>
+            <p style="margin-bottom: 24px;">
+                You haven't saved any items to your wishlist yet. Browse our store catalog and click the heart icon on any product to save it here!
+            </p>
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">
+                ✨ Explore Available Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

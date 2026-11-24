@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Demo Payment - AuraShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px; margin-bottom: 50px;">
+    <!-- Checkout Header -->
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">💳 Demo Payment & Checkout</h1>
+            <p class="section-subtitle">
+                Academic demo payment simulation · Supports Demo UPI, Demo Card, and Cash on Delivery
+            </p>
+        </div>
+        <a href="{{ url_for('view_cart') }}" class="btn btn-secondary btn-sm">← Back to Cart</a>
+    </div>
+
+    <!-- Safety Disclaimer Banner -->
+    <div style="background: #ede7f6; border-left: 4px solid var(--primary-color); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 24px; font-size: 13px; color: #4a148c; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 22px;">🛡️</span>
+        <div>
+            <strong>Academic Simulation Notice:</strong> This e-commerce application is designed for college demonstration.
+            <strong>Never enter real credit/debit card numbers, CVVs, PINs, or banking passwords.</strong>
+            All transactions are handled safely via simulated SQLite database records with unique transaction IDs.
+        </div>
+    </div>
+
+    <form action="{{ url_for('checkout') }}" method="POST" id="checkout-form">
+        <div class="cart-layout">
+            <!-- Left Column: Payment Options & Simulation Controls -->
+            <div>
+                <!-- Payment Method Selection Card -->
+                <div class="cart-items-card" style="margin-bottom: 24px;">
+                    <h3 style="color: var(--primary-color); font-size: 18px; font-weight: 800; margin-bottom: 16px; border-bottom: 2px solid #ecdff3; padding-bottom: 10px;">
+                        Select Demo Payment Method
+                    </h3>
+
+                    <!-- Payment Options Radio Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+                        <!-- Option 1: Demo Card -->
+                        <label style="border: 2px solid var(--primary-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; background: #faf7fd; transition: var(--transition);" id="label-card">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 24px;">💳</span>
+                                <input type="radio" name="payment_method" value="Demo Card" checked onchange="togglePaymentMethod('card')">
+                            </div>
+                            <strong style="color: var(--primary-color); font-size: 15px;">Demo Card</strong>
+                            <span style="font-size: 12px; color: var(--text-muted);">Simulated Visa / MC</span>
+                        </label>
+
+                        <!-- Option 2: Demo UPI -->
+                        <label style="border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; background: white; transition: var(--transition);" id="label-upi">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 24px;">📱</span>
+                                <input type="radio" name="payment_method" value="Demo UPI" onchange="togglePaymentMethod('upi')">
+                            </div>
+                            <strong style="color: var(--text-primary); font-size: 15px;">Demo UPI</strong>
+                            <span style="font-size: 12px; color: var(--text-muted);">GPay, PhonePe, Paytm</span>
+                        </label>
+
+                        <!-- Option 3: COD -->
+                        <label style="border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; background: white; transition: var(--transition);" id="label-cod">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 24px;">💵</span>
+                                <input type="radio" name="payment_method" value="Cash on Delivery" onchange="togglePaymentMethod('cod')">
+                            </div>
+                            <strong style="color: var(--text-primary); font-size: 15px;">Cash on Delivery</strong>
+                            <span style="font-size: 12px; color: var(--text-muted);">Pay on Delivery (Pending)</span>
+                        </label>
+                    </div>
+
+                    <!-- Payment Details Panels -->
+                    <!-- Panel 1: Demo Card Fields -->
+                    <div id="panel-card" style="display: block; background: #faf7fd; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <strong style="font-size: 14px; color: var(--primary-color);">Simulated Card Details (Pre-filled for Testing)</strong>
+                            <span style="background: #e8f5e9; color: var(--success-color); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">TEST MODE</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Dummy Cardholder Name</label>
+                            <input type="text" name="demo_cardholder" class="form-control" value="{{ current_user.full_name if current_user else 'Demo Customer' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Dummy Card Number</label>
+                            <input type="text" name="demo_card_number" class="form-control" value="4111 •••• •••• 4242" readonly style="letter-spacing: 1.5px; background: #f1e9f7;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="text" name="demo_card_expiry" class="form-control" value="12/28" readonly style="background: #f1e9f7;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVV (Demo)</label>
+                                <input type="password" name="demo_card_cvv" class="form-control" value="123" readonly style="background: #f1e9f7;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Demo UPI Fields -->
+                    <div id="panel-upi" style="display: none; background: #faf7fd; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <strong style="font-size: 14px; color: var(--primary-color);">Simulated UPI Payment</strong>
+                            <span style="background: #ede7f6; color: var(--primary-color); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">INSTANT</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Virtual Payment Address (VPA) / UPI ID</label>
+                            <input type="text" id="upi_id_input" name="demo_upi_id" class="form-control" value="alex@okhdfcbank" placeholder="username@bank">
+                        </div>
+
+                        <!-- Quick prefill chips -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                            <span style="font-size: 12px; color: var(--text-muted); align-self: center;">Quick fill:</span>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('upi_id_input').value='alex@okhdfcbank'">@okhdfcbank</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('upi_id_input').value='alex@okaxis'">@okaxis</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('upi_id_input').value='alex@paytm'">@paytm</button>
+                        </div>
+
+                        <!-- Stylized QR Code Mockup -->
+                        <div style="text-align: center; background: white; border: 1px dashed var(--secondary-color); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="font-size: 48px; line-height: 1;">📱</div>
+                            <div style="font-weight: 700; font-size: 13px; color: var(--primary-color); margin-top: 6px;">Scan with any UPI App (Simulated)</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">GPay · PhonePe · Paytm · BHIM</div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 3: COD Fields -->
+                    <div id="panel-cod" style="display: none; background: #faf7fd; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <strong style="font-size: 14px; color: var(--primary-color); display: block; margin-bottom: 12px;">Cash on Delivery Details</strong>
+                        <div class="form-group">
+                            <label class="form-label">Delivery Address</label>
+                            <textarea name="delivery_address" class="form-control" rows="3" placeholder="Enter delivery street address, hostel room, and pincode...">College Campus Hostel Block B, Room 204, Tech Park Road, Pincode 560001</textarea>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); background: #fffde7; padding: 10px; border-radius: var(--radius-sm); border-left: 3px solid #fbc02d;">
+                            ℹ️ Note: Cash will be collected upon parcel delivery. Payment status will be logged in the database as <strong>Pending</strong>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Outcome Selector (College Project Feature) -->
+                <div class="cart-items-card" style="border: 2px dashed #ba68c8;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <h4 style="color: var(--primary-color); font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                            🧪 Viva Demonstration: Payment Simulation Mode
+                        </h4>
+                        <span style="font-size: 11px; background: #f3e5f5; color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-weight: 700;">EXAMINER DEMO</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+                        Select whether to simulate a successful payment approval or a declined transaction to demonstrate error handling:
+                    </p>
+
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--success-color);">
+                            <input type="radio" name="simulation_outcome" value="success" checked>
+                            <span>🟢 Simulate Success (Payment Approved)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--danger-color);">
+                            <input type="radio" name="simulation_outcome" value="failure">
+                            <span>🔴 Simulate Failure (Transaction Declined)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Review & Confirmation -->
+            <div class="cart-summary-card">
+                <h3 class="summary-title">Order Breakdown</h3>
+
+                <div style="max-height: 240px; overflow-y: auto; margin-bottom: 16px; padding-right: 4px;">
+                    {% for item in cart_items %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px dashed #f1e9f7;">
+                        <div>
+                            <span>{{ item.image or '🛍️' }}</span>
+                            <strong>{{ item.name }}</strong>
+                            <div style="color: var(--text-muted); font-size: 11px;">{{ item.quantity }} × ₹{{ "{:,.2f}".format(item.price) }}</div>
+                        </div>
+                        <div style="font-weight: 700; color: var(--primary-color);">
+                            ₹{{ "{:,.2f}".format(item.quantity * item.price) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="summary-row">
+                    <span>Items Subtotal:</span>
+                    <span>₹{{ "{:,.2f}".format(total_amount) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Estimated Shipping:</span>
+                    <span style="color: var(--success-color); font-weight: 700;">FREE</span>
+                </div>
+                <div class="summary-row">
+                    <span>Demo Processing Fee:</span>
+                    <span>₹0.00</span>
+                </div>
+
+                <div class="summary-row summary-total">
+                    <span>Total Payable:</span>
+                    <span style="color: var(--primary-color);">₹{{ "{:,.2f}".format(total_amount) }}</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="pay-submit-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px;">
+                    🔒 Complete Demo Payment (₹{{ "{:,.2f}".format(total_amount) }})
+                </button>
+
+                <div style="text-align: center; margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+                    ⚡ Generates unique Transaction ID & updates SQLite records instantly
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function togglePaymentMethod(method) {
+    const panelCard = document.getElementById('panel-card');
+    const panelUpi = document.getElementById('panel-upi');
+    const panelCod = document.getElementById('panel-cod');
+    const labelCard = document.getElementById('label-card');
+    const labelUpi = document.getElementById('label-upi');
+    const labelCod = document.getElementById('label-cod');
+    const submitBtn = document.getElementById('pay-submit-btn');
+
+    // Reset styles
+    [labelCard, labelUpi, labelCod].forEach(l => {
+        l.style.borderColor = 'var(--border-color)';
+        l.style.background = 'white';
+    });
+
+    panelCard.style.display = 'none';
+    panelUpi.style.display = 'none';
+    panelCod.style.display = 'none';
+
+    if (method === 'card') {
+        panelCard.style.display = 'block';
+        labelCard.style.borderColor = 'var(--primary-color)';
+        labelCard.style.background = '#faf7fd';
+        submitBtn.innerHTML = '🔒 Pay via Demo Card (₹{{ "{:,.2f}".format(total_amount) }})';
+    } else if (method === 'upi') {
+        panelUpi.style.display = 'block';
+        labelUpi.style.borderColor = 'var(--primary-color)';
+        labelUpi.style.background = '#faf7fd';
+        submitBtn.innerHTML = '📱 Pay via Demo UPI (₹{{ "{:,.2f}".format(total_amount) }})';
+    } else if (method === 'cod') {
+        panelCod.style.display = 'block';
+        labelCod.style.borderColor = 'var(--primary-color)';
+        labelCod.style.background = '#faf7fd';
+        submitBtn.innerHTML = '📦 Place Cash on Delivery Order (₹{{ "{:,.2f}".format(total_amount) }})';
+    }
+}
+</script>
+{% endblock %}
